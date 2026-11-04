@@ -1,5 +1,8 @@
-// Vercel serverless function: forwards AI requests from the page to the Anthropic API.
-// The API key stays on the server (environment variable), never in the page.
+// Vercel serverless function: forwards AI requests from the page to an AI provider.
+// Keys stay on the server (environment variables), never in the page.
+//   - Google Gemini (has a free tier): set GEMINI_API_KEY
+//   - Anthropic Claude (paid credits):  set ANTHROPIC_API_KEY
+// If both are set, Gemini is used unless AI_PROVIDER=anthropic.
 const hits = new Map();
 
 // Checks the Supabase sign-in token. Returns {mode:"open"} when sign-in is not configured,
@@ -17,10 +20,54 @@ async function verify(req) {
   } catch (e) { return null; }
 }
 
+async function askGemini(prompt, images) {
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const parts = images.map((im) => ({ inline_data: { mime_type: im.media_type, data: im.data } }));
+  parts.push({ text: prompt });
+  const generationConfig = { maxOutputTokens: 8192, temperature: 0.7 };
+  if (/2\.5-flash/.test(model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+    body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig }),
+  });
+  const j = await r.json();
+  if (!r.ok) {
+    const msg = (j.error && j.error.message) || "AI service error";
+    if (r.status === 429) throw new Error("The free AI limit was reached. Wait a minute and try again.");
+    throw new Error(msg);
+  }
+  if (j.promptFeedback && j.promptFeedback.blockReason) throw new Error("The AI could not answer that request.");
+  const c = j.candidates && j.candidates[0];
+  const text = ((c && c.content && c.content.parts) || []).map((p) => p.text || "").join("");
+  if (!text) throw new Error("The AI returned an empty answer. Try again.");
+  return text;
+}
+
+async function askAnthropic(prompt, images) {
+  const content = images.map((im) => ({ type: "image", source: { type: "base64", media_type: im.media_type, data: im.data } }));
+  content.push({ type: "text", text: prompt });
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model: process.env.CLAUDE_MODEL || "claude-sonnet-5-5", max_tokens: 6000, messages: [{ role: "user", content }] }),
+  });
+  const j = await r.json();
+  if (!r.ok) {
+    const msg = (j.error && j.error.message) || "AI service error";
+    if (/credit balance/i.test(msg)) throw new Error("The AI account has no credit left. Add credit, or switch to the free Gemini option.");
+    throw new Error(msg);
+  }
+  return (j.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: "Server is missing ANTHROPIC_API_KEY" });
+
+  const useGemini = !!process.env.GEMINI_API_KEY && process.env.AI_PROVIDER !== "anthropic";
+  if (!useGemini && !process.env.ANTHROPIC_API_KEY)
+    return res.status(500).json({ error: "Server has no AI key. Add GEMINI_API_KEY or ANTHROPIC_API_KEY in Vercel." });
 
   const allowed = process.env.ALLOWED_ORIGIN; // e.g. https://studyloop.vercel.app
   if (allowed && req.headers.origin && req.headers.origin !== allowed)
@@ -32,7 +79,7 @@ module.exports = async (req, res) => {
   if (auth.mode === "open" && code && req.headers["x-access-code"] !== code)
     return res.status(401).json({ error: "Access code required" });
 
-  // Simple per-IP rate limit (best effort; resets when the function restarts)
+  // Simple per-user rate limit (best effort; resets when the function restarts)
   const ip = auth.id || (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
   const now = Date.now();
   const recent = (hits.get(ip) || []).filter((t) => now - t < 60000);
@@ -44,33 +91,13 @@ module.exports = async (req, res) => {
   const { prompt, images } = req.body || {};
   if (typeof prompt !== "string" || !prompt || prompt.length > 60000)
     return res.status(400).json({ error: "Invalid prompt" });
-
-  const content = [];
-  for (const im of Array.isArray(images) ? images.slice(0, 4) : []) {
-    if (im && typeof im.data === "string" && /^image\/(jpeg|png|webp|gif)$/.test(im.media_type))
-      content.push({ type: "image", source: { type: "base64", media_type: im.media_type, data: im.data } });
-  }
-  content.push({ type: "text", text: prompt });
+  const imgs = (Array.isArray(images) ? images : []).slice(0, 4)
+    .filter((im) => im && typeof im.data === "string" && /^image\/(jpeg|png|webp|gif)$/.test(im.media_type));
 
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: process.env.CLAUDE_MODEL || "claude-sonnet-5-5",
-        max_tokens: 6000,
-        messages: [{ role: "user", content }],
-      }),
-    });
-    const j = await r.json();
-    if (!r.ok) return res.status(502).json({ error: (j.error && j.error.message) || "AI service error" });
-    const text = (j.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+    const text = useGemini ? await askGemini(prompt, imgs) : await askAnthropic(prompt, imgs);
     return res.status(200).json({ text });
   } catch (e) {
-    return res.status(502).json({ error: "Could not reach the AI service" });
+    return res.status(502).json({ error: e.message || "Could not reach the AI service" });
   }
 };
