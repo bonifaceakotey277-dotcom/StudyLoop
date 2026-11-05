@@ -4,6 +4,8 @@
 //   - Anthropic Claude (paid credits):  set ANTHROPIC_API_KEY
 // If both are set, Gemini is used unless AI_PROVIDER=anthropic.
 const hits = new Map();
+// Accept the key whichever way the variable was named in Vercel.
+const geminiKey = () => process.env.GEMINI_API_KEY || process.env.Gemini_API_Key || process.env.GEMINI_API_KEY_ || "";
 
 // Checks the Supabase sign-in token. Returns {mode:"open"} when sign-in is not configured,
 // {mode:"user", id} for a valid signed-in user, or null when the token is missing/invalid.
@@ -21,14 +23,16 @@ async function verify(req) {
 }
 
 async function askGemini(prompt, images) {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const parts = images.map((im) => ({ inline_data: { mime_type: im.media_type, data: im.data } }));
   parts.push({ text: prompt });
-  const generationConfig = { maxOutputTokens: 8192, temperature: 0.7 };
+  const generationConfig = { maxOutputTokens: 16384, temperature: 0.7 };
+  // Keep "thinking" short so it does not use up the answer length (and answers come back faster).
   if (/2\.5-flash/.test(model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  else if (/gemini-3/.test(model)) generationConfig.thinkingConfig = { thinkingLevel: "low" };
   const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+    headers: { "content-type": "application/json", "x-goog-api-key": geminiKey() },
     body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig }),
   });
   const j = await r.json();
@@ -65,7 +69,7 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
-  const useGemini = !!process.env.GEMINI_API_KEY && process.env.AI_PROVIDER !== "anthropic";
+  const useGemini = !!geminiKey() && process.env.AI_PROVIDER !== "anthropic";
   if (!useGemini && !process.env.ANTHROPIC_API_KEY)
     return res.status(500).json({ error: "Server has no AI key. Add GEMINI_API_KEY or ANTHROPIC_API_KEY in Vercel." });
 
