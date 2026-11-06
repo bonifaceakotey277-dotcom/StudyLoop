@@ -51,6 +51,7 @@ body.mo #dv{opacity:1;pointer-events:auto}body.mo #dr{transform:none;visibility:
 if(window.claude)return;
 const CFG=window.SL_CONFIG||{};
 let sb=null;
+window.SL_NEEDS_AUTH=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey);window.SL_USER=null;window.SL_SHOW_AUTH=(n,m)=>showAuth(n,m);
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
 
 /* ---------- AI ---------- */
@@ -82,22 +83,60 @@ window.claude={use:async n=>{if(n==="sample")return sample;if(n==="downloads")re
 
 /* ---------- Sign-in (only when /config.js has Supabase keys) ---------- */
 const $i=id=>document.getElementById(id);
-function msg(t){const m=$i("am");if(m)m.textContent=t||""}
-function showAuth(note){
+function msg(t,ok){const m=$i("am");if(m){m.textContent=t||"";m.style.color=ok?"#1f7a5a":"#b3392f"}}
+const LPCSS='.lp{min-height:100%;background:var(--bg,#f6f5f1);color:var(--ink,#1d2320);font-family:system-ui,-apple-system,Segoe UI,sans-serif}.lp-stripe{height:8px;background:linear-gradient(90deg,#ce1126 0 33.3%,#fcd116 33.3% 66.6%,#006b3f 66.6%)}.lp-h{max-width:960px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}.lp-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700}.lp-logo i{font-style:normal;color:#1f7a5a}.lp-hero{max-width:720px;margin:0 auto;padding:34px 18px 18px;text-align:center}.lp-tag{display:inline-block;background:#fff6c9;color:#6b5600;border:1px solid #f0dc7a;border-radius:99px;padding:4px 12px;font-size:13px}.lp-hero h1{font-size:clamp(28px,6vw,44px);line-height:1.15;margin:16px 0 12px}.lp-hero p{font-size:17px;color:var(--mut,#66706a);margin:0 auto 22px;max-width:560px}.lp-cta{padding:14px 26px;font-size:17px}.lp-note{margin-top:10px;font-size:13px;color:var(--mut,#66706a)}.lp-cards{max-width:960px;margin:22px auto;padding:0 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.lp-cards .card{margin:0}.lp-cards h3{margin:0 0 6px}.lp-f{text-align:center;padding:22px 18px 40px;color:var(--mut,#66706a);font-size:14px}.lp-mod{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:5}.lp-card{width:100%;max-width:380px;margin:0!important;position:relative}.lp-x{position:absolute;right:10px;top:8px;border:0;background:none;font-size:20px;cursor:pointer;color:inherit}.lp-in{display:block;width:100%;box-sizing:border-box;margin-bottom:8px}.lp-sw{text-align:center;margin:12px 0 0}@media (prefers-color-scheme:dark){.lp-tag{background:#3a3310;color:#f6e27a;border-color:#6b5c18}}';
+const LOGO='<svg width="34" height="34" viewBox="0 0 48 48" role="img" aria-label="StudyLoop logo"><rect width="48" height="48" rx="12" fill="#1f7a5a"/><path d="M34 17a11 11 0 1 0 2 9" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M34 9v8h-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 25l4 4 7-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function setMode(m){
+  const up=m==="up";
+  $i("a-t").textContent=up?"Create your account":"Welcome back";
+  $i("an").style.display=up?"block":"none";
+  $i("a1").textContent=up?"Create account":"Sign in";
+  $i("a-sw").textContent=up?"Already have an account? Sign in":"New here? Create an account";
+  $i("a3").style.display=up?"none":"inline";
+  $i("ap").autocomplete=up?"new-password":"current-password";
+  $i("a1").dataset.mode=m;msg("");
+}
+function openBox(m){$i("lp-mod").style.display="flex";setMode(m);setTimeout(()=>{const f=$i(m==="up"?"an":"ae");if(f)f.focus()},50)}
+function closeBox(){const b=$i("lp-mod");if(b)b.style.display="none"}
+function showAuth(note,mode){
   let o=$i("auth");
   if(!o){
+    const st=document.createElement("style");st.textContent=LPCSS;document.head.appendChild(st);
     o=document.createElement("div");o.id="auth";
-    o.style.cssText="position:fixed;inset:0;z-index:100;background:var(--bg,#f6f5f1);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto";
-    o.innerHTML='<div class="card" style="width:100%;max-width:360px;margin:0"><div style="text-align:center;margin-bottom:12px"><svg width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="StudyLoop logo"><rect width="48" height="48" rx="12" fill="#1f7a5a"/><path d="M34 17a11 11 0 1 0 2 9" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M34 9v8h-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 25l4 4 7-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><h2 style="margin:8px 0 2px">StudyLoop</h2><div class="mut">Sign in to study</div></div><div id="am" class="mut" style="min-height:20px;margin-bottom:6px;color:#b3392f"></div><input id="ae" type="email" placeholder="Email" autocomplete="email"><div style="height:8px"></div><input id="ap" type="password" placeholder="Password (8+ characters)" autocomplete="current-password"><div class="row" style="margin-top:12px"><button id="a1" class="p" style="flex:1">Sign in</button><button id="a2" style="flex:1">Create account</button></div><p style="text-align:center;margin:12px 0 0"><a id="a3" href="#">Forgot password?</a></p></div>';
+    o.style.cssText="position:fixed;inset:0;z-index:100;overflow:auto;background:var(--bg,#f6f5f1)";
+    o.innerHTML='<div class="lp"><div class="lp-stripe"></div><header class="lp-h"><span class="lp-logo">'+LOGO+'<span>Study<i>Loop</i></span></span><button id="l-in">Sign in</button></header>'
+    +'<section class="lp-hero"><span class="lp-tag">Akwaaba! Made in Ghana \ud83c\uddec\ud83c\udded</span><h1>Pass your BECE, WASSCE and university exams with confidence</h1><p>Practise with questions built for Ghanaian students, learn with Shark, your study buddy, and see exactly what to revise next.</p><button id="l-up" class="p lp-cta">Get started free</button><div class="lp-note">Free to start. No card needed.</div></section>'
+    +'<section class="lp-cards"><div class="card"><h3>Built for Ghana</h3><div class="mut">BECE and WASSCE subjects like Integrated Science, Core Maths, English and Social Studies, in the WAEC style.</div></div><div class="card"><h3>Meet Shark</h3><div class="mut">A friendly AI study buddy that explains tough topics using your own notes.</div></div><div class="card"><h3>Know what to revise</h3><div class="mut">See your weak topics and get a clear next step every time you study.</div></div></section>'
+    +'<footer class="lp-f">StudyLoop \u00b7 Made with pride in Ghana</footer>'
+    +'<div id="lp-mod" class="lp-mod"><div class="card lp-card"><button id="a-x" class="lp-x" aria-label="Close">\u2715</button><h2 id="a-t" style="margin:0 0 8px">Welcome back</h2><div id="am" style="min-height:20px;margin-bottom:6px;font-size:14px"></div>'
+    +'<input id="an" class="lp-in" type="text" placeholder="Your full name" autocomplete="name"><input id="ae" class="lp-in" type="email" placeholder="Email" autocomplete="email"><input id="ap" class="lp-in" type="password" placeholder="Password (8+ characters)" autocomplete="current-password">'
+    +'<button id="a1" class="p" style="width:100%;margin-top:4px">Sign in</button><p class="lp-sw"><a id="a-sw" href="#">New here? Create an account</a></p><p class="lp-sw" style="margin-top:6px"><a id="a3" href="#">Forgot password?</a></p></div></div></div>';
     document.body.appendChild(o);
-    const E=()=>$i("ae").value.trim(),P=()=>$i("ap").value;
-    const signIn=async()=>{msg("");if(!E()||!P())return msg("Enter your email and password.");const r=await sb.auth.signInWithPassword({email:E(),password:P()});if(r.error)msg(r.error.message)};
-    $i("a1").onclick=signIn;
-    $i("ap").onkeydown=e=>{if(e.key==="Enter")signIn()};
-    $i("a2").onclick=async()=>{msg("");if(!E())return msg("Enter your email.");if(P().length<8)return msg("Use a password of at least 8 characters.");const r=await sb.auth.signUp({email:E(),password:P()});if(r.error)return msg(r.error.message);if(!r.data.session)msg("Check your email to confirm your account, then sign in.")};
-    $i("a3").onclick=async e=>{e.preventDefault();if(!E())return msg("Enter your email first.");const r=await sb.auth.resetPasswordForEmail(E(),{redirectTo:location.origin});msg(r.error?r.error.message:"Password reset email sent.")};
+    const N=()=>$i("an").value.trim(),E=()=>$i("ae").value.trim(),P=()=>$i("ap").value;
+    $i("l-in").onclick=()=>openBox("in");$i("l-up").onclick=()=>openBox("up");$i("a-x").onclick=closeBox;
+    $i("lp-mod").onclick=e=>{if(e.target.id==="lp-mod")closeBox()};
+    $i("a-sw").onclick=e=>{e.preventDefault();setMode($i("a1").dataset.mode==="up"?"in":"up")};
+    const go=async()=>{
+      msg("");const up=$i("a1").dataset.mode==="up";
+      if(up&&!N())return msg("Please enter your name.");
+      if(!E())return msg("Enter your email.");
+      if(!P())return msg("Enter your password.");
+      if(up){
+        if(P().length<8)return msg("Use a password of at least 8 characters.");
+        const r=await sb.auth.signUp({email:E(),password:P(),options:{data:{full_name:N()}}});
+        if(r.error)return msg(r.error.message);
+        if(!r.data.session){setMode("in");msg("Almost there! Check your email to confirm your account, then sign in.",true)}
+      }else{
+        const r=await sb.auth.signInWithPassword({email:E(),password:P()});
+        if(r.error)msg(r.error.message);
+      }
+    };
+    $i("a1").onclick=go;$i("ap").onkeydown=e=>{if(e.key==="Enter")go()};
+    $i("a3").onclick=async e=>{e.preventDefault();if(!E())return msg("Enter your email first.");const r=await sb.auth.resetPasswordForEmail(E(),{redirectTo:location.origin});msg(r.error?r.error.message:"Password reset email sent.",!r.error)};
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBox()});
   }
-  if(note)msg(note);
+  if(mode)openBox(mode);
+  if(note){if(!mode)openBox("in");msg(note)}
 }
 function hideAuth(){const o=$i("auth");if(o)o.remove()}
 function acct(email){
@@ -164,6 +203,89 @@ async function syncPush(){
 }
 async function flushSync(){if(SY.ready){clearTimeout(SY.timer);await syncPush()}}
 /* SYNC-END */
+/* ---------- Landing page (shown to signed-out visitors) ---------- */
+const LP_CSS=`
+#land{position:fixed;inset:0;z-index:90;overflow:auto;background:#f7f8f3;color:#12231b;font:17px/1.6 Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased}
+#land *{box-sizing:border-box}
+#land h1,#land h2,#land h3,#land .lp-btn,#land .lp-brand,#land .lp-q,#land .lp-num{font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+#land h1,#land h2,#land h3,#land p,#land ol{margin:0;padding:0}
+#land .lp-wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+#land .lp-top{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+#land .lp-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;color:#0f3d2e}
+#land .lp-btn{display:inline-block;border:2px solid #0f3d2e;background:#0f3d2e;color:#fff;font-weight:800;font-size:16px;line-height:1;padding:14px 22px;border-radius:12px;cursor:pointer;text-decoration:none}
+#land .lp-btn.alt{background:transparent;color:#0f3d2e}
+#land .lp-btn.sm{padding:10px 16px;font-size:15px}
+#land .lp-btn:focus-visible,#land .lp-opt:focus-visible{outline:3px solid #e2b007;outline-offset:3px}
+#land .lp-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center;padding:32px 0 64px}
+#land h1{font-size:clamp(34px,5.4vw,58px);line-height:1.04;letter-spacing:-.025em;font-weight:800;color:#0f3d2e;margin-bottom:18px}
+#land .lp-sub{font-size:19px;max-width:33em;color:#33453c;margin-bottom:26px}
+#land .lp-cta{display:flex;gap:12px;flex-wrap:wrap}
+#land .lp-demo{background:#fff;border:2px solid #0f3d2e;border-radius:18px;padding:20px;box-shadow:8px 8px 0 #e2b007}
+#land .lp-note{font-size:15px;color:#33453c;border-bottom:1px dashed #b9c7bd;padding-bottom:12px;margin-bottom:14px}
+#land mark{background:#ffe27a;color:inherit;padding:0 3px;border-radius:3px}
+#land .lp-q{font-weight:800;font-size:18px;line-height:1.3;margin-bottom:10px}
+#land .lp-opt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;border:2px solid #cfd8d1;background:#fff;border-radius:10px;font:16px system-ui,sans-serif;cursor:pointer;color:#12231b}
+#land .lp-opt:hover{border-color:#0f3d2e}
+#land .lp-opt.ok{border-color:#1f7a5a;background:#e2f4ea}
+#land .lp-opt.no{border-color:#b3392f;background:#fbe5e2}
+#land .lp-shark{display:none;margin-top:12px;padding:12px 14px;background:#fff3c4;border-radius:14px 14px 14px 4px;font:15px/1.5 system-ui,sans-serif}
+#land .lp-fine{font:13px/1.4 system-ui,sans-serif;color:#5a6b61;margin-top:10px}
+#land h2{font-size:clamp(26px,3.6vw,38px);line-height:1.1;letter-spacing:-.02em;font-weight:800;color:#0f3d2e;margin-bottom:22px}
+#land .lp-sec{padding:40px 0}
+#land .lp-levels{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+#land .lp-levels>div{border-left:4px solid #0f3d2e;padding-left:16px}
+#land h3{font-size:20px;font-weight:800;margin-bottom:6px;color:#12231b}
+#land .lp-feat{display:grid;grid-template-columns:1fr 1fr;gap:26px 44px}
+#land .lp-steps{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+#land .lp-num{font-size:54px;font-weight:800;line-height:1;color:#e2b007;display:block;margin-bottom:6px}
+#land .lp-band{background:#0f3d2e;color:#fff;border-radius:20px;padding:44px 32px;margin:24px 0 36px}
+#land .lp-band h2{color:#fff;margin-bottom:10px}
+#land .lp-band p{margin-bottom:22px;color:#d7e8dd}
+#land .lp-band .lp-btn{background:#fff;color:#0f3d2e;border-color:#fff}
+#land .lp-band .lp-btn.alt{background:transparent;color:#fff}
+#land .lp-foot{padding:8px 0 40px;font:14px system-ui,sans-serif;color:#5a6b61}
+@media(max-width:820px){#land .lp-hero,#land .lp-feat{grid-template-columns:1fr}#land .lp-levels,#land .lp-steps{grid-template-columns:1fr}#land{font-size:16px}}
+`;
+const LP_HTML=`<div class="lp-wrap">
+<div class="lp-top"><div class="lp-brand">${'<svg width="34" height="34" viewBox="0 0 48 48" role="img" aria-label="StudyLoop logo"><rect width="48" height="48" rx="12" fill="#1f7a5a"/><path d="M34 17a11 11 0 1 0 2 9" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M34 9v8h-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 25l4 4 7-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'}StudyLoop</div><button class="lp-btn alt sm" data-go="in">Sign in</button></div>
+<div class="lp-hero"><div>
+<h1>Turn your class notes into practice you can actually do.</h1>
+<p class="lp-sub">Add your notes. StudyLoop writes quizzes, flashcards and mock exams from them, then shows you which topics to revise next. Built for students in Ghana, from JHS to university.</p>
+<div class="lp-cta"><button class="lp-btn" data-go="up">Create free account</button><button class="lp-btn alt" data-go="in">Sign in</button></div></div>
+<div class="lp-demo" aria-label="Sample question"><p class="lp-note"><b>Your notes:</b> During photosynthesis, green plants take in carbon dioxide and water. <mark>They release oxygen as a by-product.</mark></p>
+<p class="lp-q">Which gas does a plant release during photosynthesis?</p>
+<button class="lp-opt" data-a="0">A. Carbon dioxide</button><button class="lp-opt" data-a="1">B. Nitrogen</button><button class="lp-opt" data-a="2">C. Oxygen</button><button class="lp-opt" data-a="3">D. Hydrogen</button>
+<p class="lp-shark" id="lp-shark"></p><p class="lp-fine">A sample question. Tap an answer.</p></div></div>
+<section class="lp-sec"><h2>Set up for your level</h2><div class="lp-levels">
+<div><h3>JHS</h3><p>Preparing for the BECE. Simple explanations, BECE-style questions and an Integrated Science syllabus pack.</p></div>
+<div><h3>SHS</h3><p>Preparing for the WASSCE. Syllabus-based practice and mock papers for Integrated Science, Core Mathematics, English Language and Social Studies.</p></div>
+<div><h3>University</h3><p>Upload lecture slides and notes. Get quizzes, mock exams and a day-by-day revision plan to your exam date.</p></div></div></section>
+<section class="lp-sec"><h2>What you can do</h2><div class="lp-feat">
+<div><h3>Notes in, practice out</h3><p>Paste text or upload a PDF, slides or photos of your notes. Key points and flashcards appear in seconds.</p></div>
+<div><h3>Questions that look like the exam</h3><p>Multiple choice with options A to E, true or false sets, and essay questions marked against a mark scheme.</p></div>
+<div><h3>Shark, your study buddy</h3><p>Ask about anything in your notes, in text or by voice, and get next steps that fit what you struggle with.</p></div>
+<div><h3>A clear list of what to fix</h3><p>After every quiz you see which topics cost you marks, with an AI study plan for each.</p></div>
+<div><h3>Revision plan</h3><p>Set your exam date and get a plan for each day until then.</p></div>
+<div><h3>Pick up on any device</h3><p>Your courses and results save to your account, so your phone and laptop stay in step.</p></div></div></section>
+<section class="lp-sec"><h2>How it works</h2><ol class="lp-steps">
+<li><span class="lp-num">1</span><h3>Add your notes</h3><p>Type, paste or upload what your teacher gave you.</p></li>
+<li><span class="lp-num">2</span><h3>Practise</h3><p>Take quizzes, flashcards and timed mock exams.</p></li>
+<li><span class="lp-num">3</span><h3>Fix weak spots</h3><p>See your weakest topics and revise those first.</p></li></ol></section>
+<div class="lp-band"><h2>Start with one set of notes.</h2><p>It is free to create an account and try it.</p><div class="lp-cta"><button class="lp-btn" data-go="up">Create free account</button><button class="lp-btn alt" data-go="in">Sign in</button></div></div>
+<p class="lp-fine">Practice questions are written for StudyLoop and are not copies of real WAEC papers. The AI can make mistakes, so check important answers with your teacher or textbook.</p>
+<div class="lp-foot">StudyLoop. Study. Test. Repeat.</div></div>`;
+function showLanding(){
+  if($i("land"))return;hideAuth();
+  if(!$i("lp-css")){const s=document.createElement("style");s.id="lp-css";s.textContent=LP_CSS;document.head.appendChild(s);
+    const l=document.createElement("link");l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&display=swap";document.head.appendChild(l)}
+  const o=document.createElement("div");o.id="land";o.innerHTML=LP_HTML;document.body.appendChild(o);
+  o.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{showAuth();const e=$i("ae");if(e)e.focus()});
+  const sh=o.querySelector("#lp-shark");let done=false;
+  o.querySelectorAll(".lp-opt").forEach(b=>b.onclick=()=>{if(done)return;done=true;const a=+b.dataset.a,ok=a===2;
+    o.querySelectorAll(".lp-opt").forEach(x=>{if(+x.dataset.a===2)x.classList.add("ok");else if(x===b)x.classList.add("no")});
+    sh.style.display="block";sh.innerHTML="<b>Shark:</b> "+(ok?"Yes, oxygen. Plants take in carbon dioxide and give off oxygen. Want a harder one on photosynthesis?":"Not quite. Plants take in carbon dioxide and give off oxygen. I will bring this topic back later so it sticks.")});
+}
+function hideLanding(){const o=$i("land");if(o)o.remove()}
 function onIn(s){
   const id=s.user.id,cur=ls("sl-user");
   if(!cur)ls("sl-user",id);                 /* first sign-in keeps any existing local data */
@@ -171,15 +293,18 @@ function onIn(s){
     const d=ls("sl1");if(d)ls("sl1:"+cur,d);
     const m=ls("sl1:"+id);ls("sl1",m||null);ls("sl-user",id);location.reload();return;
   }
-  hideAuth();acct(s.user.email);
+  window.SL_USER=s.user;hideAuth();hideLanding();acct(s.user.email);
+  sb.from("profiles").select("display_name").eq("id",id).maybeSingle().then(r=>{const n=r&&r.data&&r.data.display_name,b=$i("acct");if(b&&n)b.dataset.email=n+" \u00b7 "+(s.user.email||"")}).catch(()=>{});
   if(SY.uid!==id)startSync(id);
 }
 document.addEventListener("DOMContentLoaded",async()=>{
   if(!CFG.supabaseUrl||!CFG.supabaseAnonKey||!window.supabase)return;
   sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
+  const sp=document.createElement("div");sp.style.cssText="position:fixed;inset:0;z-index:99;background:var(--bg,#f6f5f1)";document.body.appendChild(sp);
   const r=await sb.auth.getSession();
-  if(r.data.session)onIn(r.data.session);else showAuth();
-  sb.auth.onAuthStateChange((ev,s)=>{if(s)onIn(s);else if(ev==="SIGNED_OUT")showAuth()});
+  if(r.data.session)onIn(r.data.session);else showLanding();
+  sp.remove();
+  sb.auth.onAuthStateChange((ev,s)=>{if(s)onIn(s);else if(ev==="SIGNED_OUT")showLanding()});
 });
 })();
 </script>
@@ -202,7 +327,7 @@ async function ai(prompt){
 }
 function search(q){const e=encodeURIComponent(q);return[["Wikipedia","https://en.wikipedia.org/w/index.php?search="+e],["Khan Academy","https://www.khanacademy.org/search?page_search_query="+e],["YouTube","https://www.youtube.com/results?search_query="+e+"+explained"],["Google Scholar","https://scholar.google.com/scholar?q="+e]]}
 function hl(text,list){let h=esc(text);(list||[]).forEach(p=>{if(!p||p.length<4)return;const e=esc(p).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");h=h.replace(new RegExp(e,"i"),m=>"<mark>"+m+"</mark>")});return h}
-function newSem(){const n=$("#sn").value.trim();if(!n)return;const s={id:uid(),name:n,notes:[],results:[],cards:[]};S.sems.push(s);save();sid=s.id;tab="notes";render()}
+function newSem(){if(window.SL_NEEDS_AUTH&&!window.SL_USER){window.SL_SHOW_AUTH("Create an account or sign in to add your first course.","up");return}const n=$("#sn").value.trim();if(!n)return;const s={id:uid(),name:n,notes:[],results:[],cards:[]};S.sems.push(s);save();sid=s.id;tab="notes";render()}
 function delSem(id){if(window.pd!==id){window.pd=id;render();return}window.pd=null;S.sems=S.sems.filter(s=>s.id!==id);if(db)try{{const c=db.collection("data/users/"+uidv);c.doc(id).delete().catch(()=>{});Object.keys(pc).filter(k=>k.startsWith(id+"~")).forEach(k=>{c.doc(k).delete().catch(()=>{});delete pc[k]})}}catch(e){}save();render()}
 function openSem(id){sid=id;tab="notes";qz=null;err="";render()}
 function setTab(t){tab=t;qz=null;err="";clearInterval(timer);if(t==="group")loadBoard();else render()}
@@ -469,7 +594,7 @@ function drGo(t){if(!sid||sid===PS||sid===TS||isSciSid(sid)){const V=S.sems.filt
 function drGoOld(t){drawer(false);setTab(t)}
 function drDel(id){const was=window.pd===id;delSem(id);if(was&&sid===id)sid=null;drRender();render()}
 function drOpen(id){drawer(false);if(id)openSem(id);else{sid=null;render()}}
-function drNew(){const el=$("#dn"),n=el&&el.value.trim();if(!n)return;const s={id:uid(),name:n,notes:[],results:[],cards:[]};S.sems.push(s);save();drawer(false);sid=s.id;tab="notes";qz=null;render()}
+function drNew(){if(window.SL_NEEDS_AUTH&&!window.SL_USER){window.SL_SHOW_AUTH("Create an account or sign in to add a course.","up");return}const el=$("#dn"),n=el&&el.value.trim();if(!n)return;const s={id:uid(),name:n,notes:[],results:[],cards:[]};S.sems.push(s);save();drawer(false);sid=s.id;tab="notes";qz=null;render()}
 function pin(id){const s=S.sems.find(x=>x.id===id);if(!s)return;s.pin=!s.pin;save();drRender();if(!sid)render()}
 document.addEventListener("keydown",e=>{if(e.key==="Escape")drawer(false)});
 function toggleTheme(){const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;r.dataset.theme=d?"light":"dark";try{localStorage.setItem("sl-theme",r.dataset.theme)}catch(e){}}
