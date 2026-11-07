@@ -408,6 +408,7 @@ function render(){
     `;return}
   const s=sem();
   if(sid===PS){a.innerHTML=papersPage(s);return}
+  if(sid===FS){a.innerHTML=`<div class="top"><div class="brand"><div><h1>Focus <b>timer</b></h1></div></div></div>`+focusView();return}
   if(sid===TS){a.innerHTML=tutorPage(s);return}
   if(isSciSid(sid)){PKEY=keyOf(sid);a.innerHTML=sciPage(s);return}
   const tabs=[["notes","Notes"],["quiz","Quiz"],["cards","Flashcards"],["written","Written"],["exam","Mock exam"],["chat","Chat"]];
@@ -543,7 +544,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.class
 document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.body.classList.contains("rd"))closeRd()});
 $("#lgo").innerHTML=logo(34);
 function drawer(o){if(!o)window.pd=null;document.body.classList.toggle("mo",o);if(o)drRender()}
-function drRender(){const L=s=>`<div class="dri${s.id===sid?" on":""}" onclick="drOpen('${s.id}')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span><button onclick="event.stopPropagation();pin('${s.id}')" aria-label="Mark important">${s.pin?"★":"☆"}</button><button onclick="event.stopPropagation();drDel('${s.id}')" aria-label="Delete course">${window.pd===s.id?"Sure?":"🗑"}</button></div>`;
+function drRender(){if(S.level==="JHS"||S.level==="SHS")return drSchool();const L=s=>`<div class="dri${s.id===sid?" on":""}" onclick="drOpen('${s.id}')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span><button onclick="event.stopPropagation();pin('${s.id}')" aria-label="Mark important">${s.pin?"★":"☆"}</button><button onclick="event.stopPropagation();drDel('${s.id}')" aria-label="Delete course">${window.pd===s.id?"Sure?":"🗑"}</button></div>`;
 const P=S.sems.filter(s=>!s.hidden&&s.pin),O=S.sems.filter(s=>!s.hidden&&!s.pin);
 $("#dr").innerHTML=`<div class="row" style="justify-content:space-between"><span class="row" style="gap:8px;flex-wrap:nowrap">${logo(28)}<b style="font-size:19px">StudyLoop</b></span><button onclick="drawer(false)" aria-label="Close menu">✕</button></div><p class="mut" style="margin:14px 0 4px">New ${lvl().unit}</p><div class="row" style="margin:0 0 8px;flex-wrap:nowrap"><input id="dn" placeholder="New ${lvl().unit}…" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter')drNew()"><button class="p" onclick="drNew()" aria-label="Create">+</button></div>${drMain()}${P.length?`<p class="mut" style="margin:12px 0 4px">★ Important</p>${P.map(L).join("")}`:""}${O.length?`<p class="mut" style="margin:12px 0 4px">${P.length?"Other "+lvl().unit+"s":"Your "+lvl().unit+"s"}</p>${O.map(L).join("")}`:""}${S.sems.some(s=>!s.hidden)?"":'<p class="mut">Nothing yet. Create your first one above.</p>'}<p class="mut" style="margin:18px 0 0">${lvl().name} · <a href="#" onclick="changeLevel();return false">Change level</a></p>`}
 function drTools(){const s=sid&&sem();if(!s)return'<p class="mut" style="margin:12px 0 4px">Open a course to see its tools.</p>';const T=(t,i,l)=>`<div class="dri${tab===t?" on":""}" onclick="drGo('${t}')">${i} ${l}</div>`;return`<p class="mut" style="margin:12px 0 4px">Tools · ${esc(s.name)}</p>`+T("quiz","📄","Question papers")+T("group","👥","Live group session")+T("prog","📊","Topic strengths")+T("chat","💬","AI tutor chat")+T("exam","📝","Mock exam")+T("focus","⏱️","Focus timer")}
@@ -643,7 +644,20 @@ let h=`<div class="top"><div class="brand"><div><h1>My <b>plan</b></h1><small>${
 keys.forEach(k=>{const st=SUBJ.find(x=>x.k===k),d=subjStat(k),tg=pl.subs[k],pc=d.pct==null?0:d.pct;
 h+=`<div class="card"><div class="row" style="justify-content:space-between"><b>${st.n}</b><span class="mut">${d.pct==null?'Not started':'Now '+d.pct+'%'} · Target ${tgtLabel(tg)}</span></div><div style="position:relative;margin:10px 0"><div class="bar"><i style="width:${pc}%"></i></div><div title="Target" style="position:absolute;top:-4px;bottom:-4px;left:${tg}%;width:3px;background:var(--ink);border-radius:2px"></div></div><p class="mut" style="margin:0 0 10px">${d.weak?'Needs work: ':'Start with: '}${esc(d.topic)}</p><div class="row"><button class="p" onclick="dashGo('${k}')">Practise now</button><button onclick="drSci(${k==='IS'?'':"'"+k+"'"})">Open ${st.n.split(' ')[0]}</button></div></div>`});
 return h+`<div class="row" style="margin-top:12px"><button onclick="drTutor()">Ask Shark</button><button onclick="editPlan()">Edit plan</button></div>`}
-function drGo(t){if(!sid||sid===PS||sid===TS||isSciSid(sid)){const V=S.sems.filter(x=>!x.hidden),f=V.find(x=>x.pin)||V[V.length-1];if(!f){drawer(false);err="Create a "+lvl().unit+" first.";sid=null;render();return}openSem(f.id)}drawer(false);setTab(t)}
+const FS="_focus";
+function focusSem(){let s=S.sems.find(x=>x.id===FS);if(!s){s={id:FS,name:"Focus",notes:[],results:[],cards:[],hidden:true};S.sems.push(s)}return s}
+function drFocus(){drawer(false);focusSem();sid=FS;tab="focus";qz=null;wr=null;err="";render()}
+function drHome(){drawer(false);sid=null;qz=null;wr=null;err="";render()}
+function drSchool(){const subs=SUBJ.filter(x=>x.lv.includes(S.level)),inPlan=k=>S.plan&&S.plan.subs&&S.plan.subs[k]!=null,own=S.sems.filter(s=>!s.hidden),
+item=(on,click,label,extra)=>`<div class="dri${on?" on":""}" onclick="${click}"><span>${label}</span>${extra||""}</div>`;
+$("#dr").innerHTML=`<div class="row" style="justify-content:space-between"><span class="row" style="gap:8px;flex-wrap:nowrap">${logo(28)}<b style="font-size:19px">StudyLoop</b></span><button onclick="drawer(false)" aria-label="Close menu">✕</button></div>`
++item(!sid,"drHome()","My plan")
++`<p class="mut" style="margin:14px 0 4px">Subjects</p>`+subs.map(x=>item(sid===subId(x.k),"drSci('"+(x.k==="IS"?"":x.k)+"')",x.n,inPlan(x.k)?`<span class="mut" style="margin-left:auto">in plan</span>`:"")).join("")
++`<p class="mut" style="margin:14px 0 4px">Tools</p>`+item(sid===TS,"drTutor()","Shark")+item(sid===PS,"drPapers()","Question papers")+item(sid===FS,"drFocus()","Focus timer")
++`<p class="mut" style="margin:14px 0 4px">Your own notes</p><div class="row" style="margin:0 0 8px;flex-wrap:nowrap"><input id="dn" placeholder="Add a subject or topic…" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter')drNew()"><button class="p" onclick="drNew()" aria-label="Create">+</button></div>`
++own.map(s=>`<div class="dri${s.id===sid?" on":""}" onclick="drOpen('${s.id}')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span><button onclick="event.stopPropagation();drDel('${s.id}')" aria-label="Delete">${window.pd===s.id?"Sure?":"🗑"}</button></div>`).join("")
++`<p class="mut" style="margin:18px 0 0">${lvl().name} · <a href="#" onclick="changeLevel();return false">Change level</a></p>`}
+function drGo(t){if(!sid||sid===PS||sid===TS||sid===FS||isSciSid(sid)){const V=S.sems.filter(x=>!x.hidden),f=V.find(x=>x.pin)||V[V.length-1];if(!f){drawer(false);err="Create a "+lvl().unit+" first.";sid=null;render();return}openSem(f.id)}drawer(false);setTab(t)}
 function drGoOld(t){drawer(false);setTab(t)}
 function drDel(id){const was=window.pd===id;delSem(id);if(was&&sid===id)sid=null;drRender();render()}
 function drOpen(id){drawer(false);if(id)openSem(id);else{sid=null;render()}}
