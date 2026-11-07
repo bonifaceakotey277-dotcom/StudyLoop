@@ -91,18 +91,30 @@ const LPCSS='.lp{min-height:100%;background:var(--bg,#f6f5f1);color:var(--ink,#1
 const LOGO='<svg width="34" height="34" viewBox="0 0 48 48" role="img" aria-label="StudyLoop logo"><rect width="48" height="48" rx="12" fill="#1f7a5a"/><path d="M34 17a11 11 0 1 0 2 9" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M34 9v8h-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 25l4 4 7-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 let AUL=null;
 const LVNAME={JHS:"Junior High (BECE)",SHS:"Senior High (WASSCE)",UNI:"University"};
+let AUD=false;const AUP={form:"",weak:"",fav:""};
+const FORMS={JHS:["JHS 1","JHS 2","JHS 3"],SHS:["SHS 1","SHS 2","SHS 3"]};
+const SUBJS={JHS:["English Language","Mathematics","Integrated Science","Social Studies","Religious and Moral Education","Computing (ICT)","French","Ghanaian Language","Career Technology","Creative Arts and Design"],
+SHS:["English Language","Core Mathematics","Integrated Science","Social Studies","Elective Mathematics","Physics","Chemistry","Biology","Economics","Geography","Government","History","Literature in English","Accounting","Business Management","Elective ICT","Other"]};
+function fillAbout(){
+  const opt=(arr,first)=>'<option value="">'+first+'</option>'+arr.map(x=>'<option>'+x+'</option>').join("");
+  const sj=SUBJS[AUL]||[];
+  $i("afm").innerHTML=opt(FORMS[AUL]||[],"Choose your form");
+  $i("awk").innerHTML=opt(sj.concat(["Not sure yet"]),"Choose a subject");
+  $i("afv").innerHTML=opt(sj.concat(["Not sure yet"]),"Choose a subject");
+}
 function lvStep(){
-  const mode=$i("a1").dataset.mode,up=mode==="up",pick=up&&!AUL;
+  const mode=$i("a1").dataset.mode,up=mode==="up",pick=up&&!AUL,school=AUL==="JHS"||AUL==="SHS",about=up&&!pick&&school&&!AUD,acc=up&&!pick&&!about;
   $i("alv").style.display=pick?"block":"none";
-  $i("alc").style.display=(up&&!pick)?"block":"none";if(AUL)$i("alt").textContent=LVNAME[AUL];
-  $i("an").style.display=(up&&!pick)?"block":"none";
-  {const sp=up&&!pick&&AUL!=="UNI";$i("apm").style.display=sp?"":"none";$i("apn").style.display=sp?"":"none"}
-  ["ae","ap","a1"].forEach(i=>{$i(i).style.display=pick?"none":""});
-  if(mode!=="reset")$i("a-t").textContent=up?(pick?"What are you studying for?":"Create your account"):"Welcome back";
+  $i("aab").style.display=about?"block":"none";
+  $i("alc").style.display=(up&&!pick)?"block":"none";if(AUL)$i("alt").textContent=LVNAME[AUL]+(AUD&&AUP.form?" \u00b7 "+AUP.form:"");
+  $i("an").style.display=acc?"block":"none";
+  $i("apm").style.display=(acc&&school)?"":"none";$i("apn").style.display=(acc&&school)?"":"none";
+  ["ae","ap","a1"].forEach(i=>{$i(i).style.display=(pick||about)?"none":""});
+  if(mode!=="reset")$i("a-t").textContent=up?(pick?"What are you studying for?":about?"Tell us about you":"Create your account"):"Welcome back";
 }
 function setMode(m){
   const up=m==="up";
-  $i("ae").style.display="";$i("a-sw").style.display="";$i("apm").style.display="none";$i("apn").style.display="none";
+  $i("ae").style.display="";$i("a-sw").style.display="";$i("apm").style.display="none";$i("apn").style.display="none";$i("aab").style.display="none";
   $i("a-t").textContent=up?"Create your account":"Welcome back";
   $i("an").style.display=up?"block":"none";
   $i("a1").textContent=up?"Create account":"Sign in";
@@ -110,11 +122,11 @@ function setMode(m){
   $i("a3").style.display=up?"none":"inline";
   $i("ap").autocomplete=up?"new-password":"current-password";
   $i("a1").dataset.mode=m;msg("");
-  if(m==="reset"){$i("a-t").textContent="Set a new password";$i("an").style.display="none";$i("ae").style.display="none";$i("a1").textContent="Save password";$i("a-sw").style.display="none";$i("a3").style.display="none";$i("ap").autocomplete="new-password";$i("alv").style.display="none";$i("alc").style.display="none";return}
+  if(m==="reset"){$i("a-t").textContent="Set a new password";$i("an").style.display="none";$i("ae").style.display="none";$i("a1").textContent="Save password";$i("a-sw").style.display="none";$i("a3").style.display="none";$i("ap").autocomplete="new-password";$i("alv").style.display="none";$i("alc").style.display="none";$i("aab").style.display="none";return}
   lvStep();
 }
 function openBox(m){$i("lp-mod").style.display="flex";setMode(m);setTimeout(()=>{const f=$i(m==="up"?"an":"ae");if(f)f.focus()},50)}
-function closeBox(){const b=$i("lp-mod");if(b)b.style.display="none"}
+function closeBox(){const b=$i("lp-mod");if(b)b.style.display="none";if($i("land"))hideAuth()}
 function showAuth(note,mode){
   let o=$i("auth");
   if(!o){
@@ -127,9 +139,11 @@ function showAuth(note,mode){
     +'<footer class="lp-f">StudyLoop \u00b7 Made with pride in Ghana</footer>'
     +'<div id="lp-mod" class="lp-mod"><div class="card lp-card"><button id="a-x" class="lp-x" aria-label="Close">\u2715</button><h2 id="a-t" style="margin:0 0 8px">Welcome back</h2><div id="am" style="min-height:20px;margin-bottom:6px;font-size:14px"></div>'
     +'<div id="alv" style="display:none"><p class="mut" style="margin:0 0 6px">Step 1 of 2. StudyLoop sets itself up for your level.</p><button class="p" data-lv="JHS" style="display:block;width:100%;margin:8px 0;padding:14px;text-align:left">Junior High School<br><small>Preparing for the BECE</small></button><button class="p" data-lv="SHS" style="display:block;width:100%;margin:8px 0;padding:14px;text-align:left">Senior High School<br><small>Preparing for the WASSCE</small></button><button class="p" data-lv="UNI" style="display:block;width:100%;margin:8px 0;padding:14px;text-align:left">University<br><small>Lectures and semester exams</small></button></div><p id="alc" class="mut" style="display:none;margin:0 0 8px">Step 2 of 2 &middot; <b id="alt"></b> &middot; <a id="achg" href="#">Change</a></p>'
+    +'<div id="aab" style="display:none"><label class="mut" for="afm">Which form are you in?</label><select id="afm" class="lp-in"></select><label class="mut" for="awk">Which subject do you find hardest?</label><select id="awk" class="lp-in"></select><label class="mut" for="afv">Which subject do you enjoy most?</label><select id="afv" class="lp-in"></select><button id="a-ab" class="p" style="width:100%;margin-top:10px">Continue</button></div>'
     +'<input id="an" class="lp-in" type="text" placeholder="Your full name" autocomplete="name"><input id="ae" class="lp-in" type="email" placeholder="Email" autocomplete="email"><input id="ap" class="lp-in" type="password" placeholder="Password (8+ characters)" autocomplete="current-password"><input id="apm" class="lp-in" type="email" placeholder="Parent or guardian email" autocomplete="off" style="display:none"><p id="apn" class="mut" style="display:none;margin:4px 0 8px;font-size:13px">So a parent or guardian can follow your progress. You can change it later from the menu.</p>'
     +'<button id="a1" class="p" style="width:100%;margin-top:4px">Sign in</button><p class="lp-sw"><a id="a-sw" href="#">New here? Create an account</a></p><p class="lp-sw" style="margin-top:6px"><a id="a3" href="#">Forgot password?</a></p><p style="text-align:center;margin:8px 0 0"><a id="a4" href="#">Back to home</a></p></div></div></div>';
     document.body.appendChild(o);
+    if($i("land")){o.style.background="rgba(8,24,17,.55)";o.querySelectorAll(".lp-stripe,.lp-h,.lp-hero,.lp-cards,.lp-f").forEach(e=>{e.style.display="none"})}
     const N=()=>$i("an").value.trim(),E=()=>$i("ae").value.trim(),P=()=>$i("ap").value;
     $i("l-in").onclick=()=>openBox("in");$i("l-up").onclick=()=>openBox("up");$i("a-x").onclick=closeBox;
     $i("lp-mod").onclick=e=>{if(e.target.id==="lp-mod")closeBox()};
@@ -145,7 +159,7 @@ function showAuth(note,mode){
       if(!P())return msg("Enter your password.");
       if(up){
         if(P().length<8)return msg("Use a password of at least 8 characters.");
-        const r=await sb.auth.signUp({email:E(),password:P(),options:{data:{full_name:N(),parent_email:needP?PM().toLowerCase():""}}});
+        const r=await sb.auth.signUp({email:E(),password:P(),options:{data:{full_name:N(),parent_email:needP?PM().toLowerCase():"",form:needP?AUP.form:"",weak_subject:needP?AUP.weak:"",fav_subject:needP?AUP.fav:""}}});
         if(r.error)return msg(r.error.message);
         if(!r.data.session){setMode("in");msg("Almost there! Check your email to confirm your account, then sign in.",true)}
       }else{
@@ -154,8 +168,9 @@ function showAuth(note,mode){
         if(r.error)msg(r.error.message);
       }
     };
-    o.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{AUL=b.dataset.lv;ls("sl-pre-level",AUL);lvStep();const f=$i("an");if(f)f.focus()});
-    $i("achg").onclick=e=>{e.preventDefault();AUL=null;ls("sl-pre-level",null);lvStep()};
+    o.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{AUL=b.dataset.lv;AUD=false;ls("sl-pre-level",AUL);if(AUL!=="UNI")fillAbout();lvStep();const f=$i(AUL==="UNI"?"an":"afm");if(f)f.focus()});
+    $i("a-ab").onclick=()=>{const f=$i("afm").value,w=$i("awk").value,v=$i("afv").value;if(!f||!w||!v)return msg("Please choose your form and both subjects.");AUP.form=f;AUP.weak=w;AUP.fav=v;AUD=true;lvStep();const n=$i("an");if(n)n.focus()};
+    $i("achg").onclick=e=>{e.preventDefault();AUL=null;AUD=false;ls("sl-pre-level",null);lvStep()};
     $i("a1").onclick=go;$i("ap").onkeydown=e=>{if(e.key==="Enter")go()};
     $i("a4").onclick=e=>{e.preventDefault();hideAuth();showLanding()};
     $i("a3").onclick=async e=>{e.preventDefault();if(!E())return msg("Enter your email first.");const r=await sb.auth.resetPasswordForEmail(E(),{redirectTo:location.origin});msg(r.error?r.error.message:"Password reset email sent.",!r.error)};
@@ -279,10 +294,7 @@ const LP_HTML=`<div class="lp-wrap">
 <h1>Turn your class notes into practice you can actually do.</h1>
 <p class="lp-sub">Add your notes. StudyLoop writes quizzes, flashcards and mock exams from them, then shows you which topics to revise next. Built for students in Ghana, from JHS to university.</p>
 <div class="lp-cta"><button class="lp-btn" data-go="up">Create free account</button><button class="lp-btn alt" data-go="in">Sign in</button></div></div>
-<div class="lp-demo" aria-label="Sample question"><p class="lp-note"><b>Your notes:</b> During photosynthesis, green plants take in carbon dioxide and water. <mark>They release oxygen as a by-product.</mark></p>
-<p class="lp-q">Which gas does a plant release during photosynthesis?</p>
-<button class="lp-opt" data-a="0">A. Carbon dioxide</button><button class="lp-opt" data-a="1">B. Nitrogen</button><button class="lp-opt" data-a="2">C. Oxygen</button><button class="lp-opt" data-a="3">D. Hydrogen</button>
-<p class="lp-shark" id="lp-shark"></p><p class="lp-fine">A sample question. Tap an answer.</p></div></div>
+<div class="lp-demo" id="lp-quiz" aria-label="Quick Ghana quiz"><p class="lp-fine" id="lp-qn" style="margin:0 0 6px"></p><p class="lp-q" id="lp-q"></p><div id="lp-opts"></div><p class="lp-shark" id="lp-shark"></p><div id="lp-next" style="margin-top:12px"></div><p class="lp-fine">A quick Ghana quiz. Tap an answer.</p></div></div>
 <section class="lp-sec"><h2>Set up for your level</h2><div class="lp-levels">
 <div><h3>JHS</h3><p>Preparing for the BECE. Simple explanations, BECE-style questions and an Integrated Science syllabus pack.</p></div>
 <div><h3>SHS</h3><p>Preparing for the WASSCE. Syllabus-based practice and mock papers for Integrated Science, Core Mathematics, English Language and Social Studies.</p></div>
@@ -301,16 +313,39 @@ const LP_HTML=`<div class="lp-wrap">
 <div class="lp-band"><h2>Start with one set of notes.</h2><p>It is free to create an account and try it.</p><div class="lp-cta"><button class="lp-btn" data-go="up">Create free account</button><button class="lp-btn alt" data-go="in">Sign in</button></div></div>
 <p class="lp-fine">Practice questions are written for StudyLoop and are not copies of real WAEC papers. The AI can make mistakes, so check important answers with your teacher or textbook.</p>
 <div class="lp-foot">StudyLoop. Study. Test. Repeat.</div></div>`;
+const LPQ=[
+{q:"In which year did Ghana become independent?",o:["1960","1957","1963","1966"],a:1,e:"Ghana became independent on 6 March 1957 under Kwame Nkrumah, the first country in sub-Saharan Africa to do so."},
+{q:"Which lake was formed by the Akosombo Dam?",o:["Lake Bosomtwe","Lake Kariba","Lake Volta","Lake Chad"],a:2,e:"Lake Volta formed behind the Akosombo Dam in the 1960s. It is one of the largest man-made lakes in the world."},
+{q:"Ghana began commercial oil production from the Jubilee Field in which year?",o:["2010","2000","2005","2015"],a:0,e:"The first oil flowed from the Jubilee Field in December 2010, which made Ghana an oil producer."}];
+function bindGo(root){root.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>showAuth("",b.dataset.go==="up"?"up":"in"))}
+function lpQuiz(root){
+  let i=0,score=0;
+  const $=sel=>root.querySelector(sel);
+  const show=()=>{
+    const q=LPQ[i];$("#lp-qn").textContent="Question "+(i+1)+" of "+LPQ.length;$("#lp-q").textContent=q.q;
+    $("#lp-shark").style.display="none";$("#lp-next").innerHTML="";
+    $("#lp-opts").innerHTML=q.o.map((t,k)=>'<button class="lp-opt" data-a="'+k+'">'+"ABCD"[k]+". "+t+"</button>").join("");
+    let done=false;
+    root.querySelectorAll(".lp-opt").forEach(b=>b.onclick=()=>{if(done)return;done=true;const a=+b.dataset.a,ok=a===q.a;if(ok)score++;
+      root.querySelectorAll(".lp-opt").forEach(x=>{if(+x.dataset.a===q.a)x.classList.add("ok");else if(x===b)x.classList.add("no")});
+      const sh=$("#lp-shark");sh.style.display="block";sh.innerHTML="<b>Shark:</b> "+(ok?"Correct! ":"Not quite. ")+q.e;
+      $("#lp-next").innerHTML='<button class="lp-btn sm" id="lp-nx">'+(i<LPQ.length-1?"Next question":"See my result")+"</button>";
+      $("#lp-nx").onclick=()=>{if(i<LPQ.length-1){i++;show()}else finish()}});
+  };
+  const finish=()=>{
+    const t=score===3?"Top marks!":score===2?"Nicely done.":"Good try.";
+    $("#lp-quiz").innerHTML='<p class="lp-q">You got '+score+" of "+LPQ.length+'. '+t+'</p><p style="margin:0 0 14px">Want questions like these for your BECE, WASSCE or university exams? Create a free account and Shark will show you what to revise next.</p><div class="lp-cta"><button class="lp-btn" data-go="up">Create free account</button><button class="lp-btn alt" id="lp-again">Try again</button></div>';
+    bindGo($("#lp-quiz"));$("#lp-again").onclick=()=>{i=0;score=0;$("#lp-quiz").innerHTML='<p class="lp-fine" id="lp-qn" style="margin:0 0 6px"></p><p class="lp-q" id="lp-q"></p><div id="lp-opts"></div><p class="lp-shark" id="lp-shark"></p><div id="lp-next" style="margin-top:12px"></div><p class="lp-fine">A quick Ghana quiz. Tap an answer.</p>';show()};
+  };
+  show();
+}
 function showLanding(){
   if($i("land"))return;hideAuth();
   if(!$i("lp-css")){const s=document.createElement("style");s.id="lp-css";s.textContent=LP_CSS;document.head.appendChild(s);
     const l=document.createElement("link");l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&display=swap";document.head.appendChild(l)}
   const o=document.createElement("div");o.id="land";o.innerHTML=LP_HTML;document.body.appendChild(o);
-  o.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{showAuth();const e=$i("ae");if(e)e.focus()});
-  const sh=o.querySelector("#lp-shark");let done=false;
-  o.querySelectorAll(".lp-opt").forEach(b=>b.onclick=()=>{if(done)return;done=true;const a=+b.dataset.a,ok=a===2;
-    o.querySelectorAll(".lp-opt").forEach(x=>{if(+x.dataset.a===2)x.classList.add("ok");else if(x===b)x.classList.add("no")});
-    sh.style.display="block";sh.innerHTML="<b>Shark:</b> "+(ok?"Yes, oxygen. Plants take in carbon dioxide and give off oxygen. Want a harder one on photosynthesis?":"Not quite. Plants take in carbon dioxide and give off oxygen. I will bring this topic back later so it sticks.")});
+  bindGo(o);
+  lpQuiz(o);
 }
 function hideLanding(){const o=$i("land");if(o)o.remove()}
 async function saveParent(u){
@@ -338,6 +373,7 @@ function onIn(s){
     const m=ls("sl1:"+id);ls("sl1",m||null);ls("sl-user",id);location.reload();return;
   }
   window.SL_USER=s.user;hideAuth();hideLanding();acct(s.user.email);saveParent(s.user);
+  {const m=(s.user&&s.user.user_metadata)||{};if(m.form&&typeof S!=="undefined"&&!S.profile){S.profile={form:m.form,weak:m.weak_subject||"",fav:m.fav_subject||""};try{save();render()}catch(e){}}}
   {const pre=ls("sl-pre-level");if(pre&&typeof S!=="undefined"&&!S.level){S.level=pre;ls("sl-pre-level",null);try{save();render()}catch(e){}}}
   sb.from("profiles").select("display_name").eq("id",id).maybeSingle().then(r=>{const n=r&&r.data&&r.data.display_name,b=$i("acct");if(b&&n)b.dataset.email=n+" \u00b7 "+(s.user.email||"")}).catch(()=>{});
   if(SY.uid!==id)startSync(id);
@@ -633,7 +669,8 @@ let n=0;Object.entries(SCI).forEach(([sec,ts])=>{h+=`<h2>${sec}</h2>`;ts.forEach
 return h}
 const LV={JHS:{name:'Junior High School (JHS)',unit:'subject',ex:'BECE',tag:'BECE PREPARATION',eg:'e.g. Integrated Science',ctx:'The student is a Junior High School (JHS) student in Ghana preparing for the BECE. Use simple, clear language and short sentences, everyday Ghanaian examples, and the style and difficulty of BECE questions.'},SHS:{name:'Senior High School (SHS)',unit:'subject',ex:'WASSCE',tag:'WASSCE PREPARATION',eg:'e.g. Core Mathematics',ctx:'The student is a Senior High School (SHS) student in Ghana preparing for the WASSCE. Match WASSCE style, terminology and difficulty, and use Ghanaian examples where helpful.'},UNI:{name:'University',unit:'course',ex:'university exams',tag:'UNIVERSITY STUDY',eg:'e.g. Biology 101',ctx:'The student is a university student. Use university-level depth and academic terminology, and assume the material comes from lectures and course notes.'}};
 const lvl=()=>LV[S.level]||LV.UNI;
-const lvCtx=()=>S.level?'Context: '+lvl().ctx+'\n\n':'';
+const lvCtx=()=>S.level?'Context: '+lvl().ctx+profCtx()+'\n\n':'';
+function profCtx(){const p=S.profile;if(!p)return'';return' The student is in '+p.form+(p.weak&&p.weak!=='Not sure yet'?', finds '+p.weak+' the hardest':'')+(p.fav&&p.fav!=='Not sure yet'?' and enjoys '+p.fav+' the most':'')+'. Pitch explanations to their form'+(p.weak&&p.weak!=='Not sure yet'?' and give extra support in '+p.weak:'')+'.'}
 function levelPage(){return`<div class="top"><div class="brand"><div><h1>Study<b>Loop</b></h1><small>WELCOME</small></div></div></div><div class="card" style="max-width:520px;margin:18px auto;text-align:center"><h3 style="font-size:20px">What level are you studying at?</h3><p class="mut">StudyLoop tailors your subjects, questions and tutor to your level. You can change it later from the menu.</p>${Object.entries(LV).map(([k,v])=>`<button class="p" style="display:block;width:100%;margin:8px 0;padding:14px" onclick="setLevel('${k}')">${v.name}<br><small>${k==="UNI"?"Lectures and semester exams":"Preparing for the "+v.ex}</small></button>`).join("")}</div>`}
 function setLevel(k){S.level=k;sid=null;save();render()}
 function changeLevel(){drawer(false);S.level=null;sid=null;render()}
@@ -644,7 +681,11 @@ function subjStat(k){const s=S.sems.find(x=>x.id===subId(k)),p=PK[k==='IS'?S.lev
 const tot=Object.values(t).reduce((a,v)=>[a[0]+v[0],a[1]+v[1]],[0,0]),weak=Object.entries(t).filter(([q,v])=>v[1]>=2).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1])[0];
 return{p,n:tot[1],pct:tot[1]?Math.round(tot[0]/tot[1]*100):null,topic:weak?weak[0]:(p.all.find(q=>!t[q])||p.all[0]),weak:!!weak}}
 const tgtLabel=v=>S.level==='SHS'?gradeOf(v):v+'%';
-function wizardPage(){if(!wz)wz={subs:{},exam:'',days:4};const av=SUBJ.filter(x=>x.lv.includes(S.level)),ch=av.filter(x=>wz.subs[x.k]!=null),opts=S.level==='SHS'?[75,70,65,60,55,50]:[90,80,70,60,50];
+const PNAME={'Integrated Science':'IS','Core Mathematics':'CM','English Language':'EN','Social Studies':'SS'};
+const pkey=n=>PNAME[n]||null;
+function preSel(){const p=S.profile;if(!p)return;const av=SUBJ.filter(x=>x.lv.includes(S.level)).map(x=>x.k);[p.weak,p.fav].forEach(n=>{const k=pkey(n);if(k&&av.includes(k)&&wz.subs[k]==null)wz.subs[k]=70})}
+function profLine(){const p=S.profile;if(!p)return'';const b=[p.form];if(p.weak&&p.weak!=='Not sure yet')b.push('Needs focus: '+p.weak);if(p.fav&&p.fav!=='Not sure yet')b.push('Favourite: '+p.fav);return`<p class="mut" style="margin:0 0 6px">${esc(b.join(' · '))}</p>`}
+function wizardPage(){if(!wz){wz={subs:{},exam:'',days:4};preSel()}const av=SUBJ.filter(x=>x.lv.includes(S.level)),ch=av.filter(x=>wz.subs[x.k]!=null),opts=S.level==='SHS'?[75,70,65,60,55,50]:[90,80,70,60,50];
 return`<div class="top"><div class="brand"><div><h1>Create your <b>plan</b></h1><small>${lvl().ex} · ${S.level}</small></div></div></div>${err?`<div class="msg">${esc(err)}</div>`:''}
 <div class="card"><h3>1. Choose your subjects</h3><div class="row">${av.map(x=>`<button class="${wz.subs[x.k]!=null?'p':''}" onclick="wzSub('${x.k}')">${x.n}</button>`).join('')}</div><p class="mut">More subjects are on the way.</p></div>
 ${ch.length?`<div class="card"><h3>2. Set your targets</h3>${ch.map(x=>`<div class="row" style="justify-content:space-between;margin:8px 0"><span>${x.n}</span><select onchange="wz.subs['${x.k}']=+this.value">${opts.map(v=>`<option value="${v}" ${wz.subs[x.k]===v?'selected':''}>${tgtLabel(v)}</option>`).join('')}</select></div>`).join('')}</div>`:''}
@@ -659,10 +700,10 @@ function dashPage(){const pl=S.plan,keys=pl?Object.keys(pl.subs).filter(k=>SUBJ.
 const ex=pl.exam?Math.ceil((new Date(pl.exam+'T00:00')-new Date().setHours(0,0,0,0))/864e5):null,cut=Date.now()-6048e5,wk=new Set();
 keys.forEach(k=>{const s=S.sems.find(x=>x.id===subId(k));((s&&s.results)||[]).forEach(r=>{if(r.date>=cut)wk.add(new Date(r.date).toDateString())})});
 let h=`<div class="top"><div class="brand"><div><h1>My <b>plan</b></h1><small>${lvl().ex} · ${S.level}</small></div></div></div>${err?`<div class="msg">${esc(err)}</div>`:''}
-<div class="grid"><div class="card"><h2 style="margin:0">${ex!=null&&ex>=0?ex:'-'}</h2><span class="mut">days to your ${lvl().ex}</span></div><div class="card"><h2 style="margin:0">${wk.size}/${pl.days}</h2><span class="mut">study days this week</span></div><div class="card"><h2 style="margin:0">${streak()}</h2><span class="mut">day streak</span></div></div>
+<div class="grid"><div class="card"><h2 style="margin:0">${ex!=null&&ex>=0?ex:'-'}</h2><span class="mut">days to your ${lvl().ex}</span></div><div class="card"><h2 style="margin:0">${wk.size}/${pl.days}</h2><span class="mut">study days this week</span></div><div class="card"><h2 style="margin:0">${streak()}</h2><span class="mut">day streak</span></div></div>${profLine()}
 <h2>Today</h2>`;
-keys.forEach(k=>{const st=SUBJ.find(x=>x.k===k),d=subjStat(k),tg=pl.subs[k],pc=d.pct==null?0:d.pct;
-h+=`<div class="card"><div class="row" style="justify-content:space-between"><b>${st.n}</b><span class="mut">${d.pct==null?'Not started':'Now '+d.pct+'%'} · Target ${tgtLabel(tg)}</span></div><div style="position:relative;margin:10px 0"><div class="bar"><i style="width:${pc}%"></i></div><div title="Target" style="position:absolute;top:-4px;bottom:-4px;left:${tg}%;width:3px;background:var(--ink);border-radius:2px"></div></div><p class="mut" style="margin:0 0 10px">${d.weak?'Needs work: ':'Start with: '}${esc(d.topic)}</p><div class="row"><button class="p" onclick="dashGo('${k}')">Practise now</button><button onclick="drSci(${k==='IS'?'':"'"+k+"'"})">Open ${st.n.split(' ')[0]}</button></div></div>`});
+keys.slice().sort((a,b)=>(pkey(S.profile&&S.profile.weak)===b)-(pkey(S.profile&&S.profile.weak)===a)).forEach(k=>{const st=SUBJ.find(x=>x.k===k),d=subjStat(k),tg=pl.subs[k],pc=d.pct==null?0:d.pct;
+h+=`<div class="card"><div class="row" style="justify-content:space-between"><b>${st.n}${k===pkey(S.profile&&S.profile.weak)?' <span class="tag">Needs focus</span>':''}${k===pkey(S.profile&&S.profile.fav)?' <span class="tag">Favourite</span>':''}</b><span class="mut">${d.pct==null?'Not started':'Now '+d.pct+'%'} · Target ${tgtLabel(tg)}</span></div><div style="position:relative;margin:10px 0"><div class="bar"><i style="width:${pc}%"></i></div><div title="Target" style="position:absolute;top:-4px;bottom:-4px;left:${tg}%;width:3px;background:var(--ink);border-radius:2px"></div></div><p class="mut" style="margin:0 0 10px">${d.weak?'Needs work: ':'Start with: '}${esc(d.topic)}</p><div class="row"><button class="p" onclick="dashGo('${k}')">Practise now</button><button onclick="drSci(${k==='IS'?'':"'"+k+"'"})">Open ${st.n.split(' ')[0]}</button></div></div>`});
 return h+`<div class="row" style="margin-top:12px"><button onclick="drTutor()">Ask Shark</button><button onclick="editPlan()">Edit plan</button></div>`}
 const FS="_focus";
 function focusSem(){let s=S.sems.find(x=>x.id===FS);if(!s){s={id:FS,name:"Focus",notes:[],results:[],cards:[],hidden:true};S.sems.push(s)}return s}
