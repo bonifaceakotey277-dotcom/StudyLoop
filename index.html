@@ -109,12 +109,14 @@ function lvStep(){
   $i("alc").style.display=(up&&!pick)?"block":"none";if(AUL)$i("alt").textContent=LVNAME[AUL]+(AUD&&AUP.form?" \u00b7 "+AUP.form:"");
   $i("an").style.display=acc?"block":"none";
   $i("apm").style.display=(acc&&school)?"":"none";$i("apn").style.display=(acc&&school)?"":"none";
+  $i("acl").style.display=acc?"block":"none";
+  if(acc){$i("acx").innerHTML=school?'I have read the <a href="#" id="apv">Privacy Notice</a>, and a parent or guardian knows I am signing up.':'I have read the <a href="#" id="apv">Privacy Notice</a>.';const pv=$i("apv");if(pv)pv.onclick=e=>{e.preventDefault();showPrivacy()}}
   ["ae","ap","a1"].forEach(i=>{$i(i).style.display=(pick||about)?"none":""});
   if(mode!=="reset")$i("a-t").textContent=up?(pick?"What are you studying for?":about?"Tell us about you":"Create your account"):"Welcome back";
 }
 function setMode(m){
   const up=m==="up";
-  $i("ae").style.display="";$i("a-sw").style.display="";$i("apm").style.display="none";$i("apn").style.display="none";$i("aab").style.display="none";
+  $i("ae").style.display="";$i("a-sw").style.display="";$i("apm").style.display="none";$i("apn").style.display="none";$i("aab").style.display="none";$i("acl").style.display="none";
   $i("a-t").textContent=up?"Create your account":"Welcome back";
   $i("an").style.display=up?"block":"none";
   $i("a1").textContent=up?"Create account":"Sign in";
@@ -122,7 +124,7 @@ function setMode(m){
   $i("a3").style.display=up?"none":"inline";
   $i("ap").autocomplete=up?"new-password":"current-password";
   $i("a1").dataset.mode=m;msg("");
-  if(m==="reset"){$i("a-t").textContent="Set a new password";$i("an").style.display="none";$i("ae").style.display="none";$i("a1").textContent="Save password";$i("a-sw").style.display="none";$i("a3").style.display="none";$i("ap").autocomplete="new-password";$i("alv").style.display="none";$i("alc").style.display="none";$i("aab").style.display="none";return}
+  if(m==="reset"){$i("a-t").textContent="Set a new password";$i("an").style.display="none";$i("ae").style.display="none";$i("a1").textContent="Save password";$i("a-sw").style.display="none";$i("a3").style.display="none";$i("ap").autocomplete="new-password";$i("alv").style.display="none";$i("alc").style.display="none";$i("aab").style.display="none";$i("acl").style.display="none";return}
   lvStep();
 }
 function openBox(m){$i("lp-mod").style.display="flex";setMode(m);setTimeout(()=>{const f=$i(m==="up"?"an":"ae");if(f)f.focus()},50)}
@@ -140,7 +142,8 @@ function showAuth(note,mode){
     +'<div id="lp-mod" class="lp-mod"><div class="card lp-card"><button id="a-x" class="lp-x" aria-label="Close">\u2715</button><h2 id="a-t" style="margin:0 0 8px">Welcome back</h2><div id="am" style="min-height:20px;margin-bottom:6px;font-size:14px"></div>'
     +'<div id="alv" style="display:none"><p class="mut" style="margin:0 0 6px">Step 1 of 2. StudyLoop sets itself up for your level.</p><button class="p" data-lv="JHS" style="display:block;width:100%;margin:8px 0;padding:14px;text-align:left">Junior High School<br><small>Preparing for the BECE</small></button><button class="p" data-lv="SHS" style="display:block;width:100%;margin:8px 0;padding:14px;text-align:left">Senior High School<br><small>Preparing for the WASSCE</small></button><button class="p" data-lv="UNI" style="display:block;width:100%;margin:8px 0;padding:14px;text-align:left">University<br><small>Lectures and semester exams</small></button></div><p id="alc" class="mut" style="display:none;margin:0 0 8px">Step 2 of 2 &middot; <b id="alt"></b> &middot; <a id="achg" href="#">Change</a></p>'
     +'<div id="aab" style="display:none"><label class="mut" for="afm">Which form are you in?</label><select id="afm" class="lp-in"></select><label class="mut" for="awk">Which subject do you find hardest?</label><select id="awk" class="lp-in"></select><label class="mut" for="afv">Which subject do you enjoy most?</label><select id="afv" class="lp-in"></select><button id="a-ab" class="p" style="width:100%;margin-top:10px">Continue</button></div>'
-    +'<input id="an" class="lp-in" type="text" placeholder="Your full name" autocomplete="name"><input id="ae" class="lp-in" type="email" placeholder="Email" autocomplete="email"><input id="ap" class="lp-in" type="password" placeholder="Password (8+ characters)" autocomplete="current-password"><input id="apm" class="lp-in" type="email" placeholder="Parent or guardian email" autocomplete="off" style="display:none"><p id="apn" class="mut" style="display:none;margin:4px 0 8px;font-size:13px">So a parent or guardian can follow your progress. You can change it later from the menu.</p>'
+    +'<input id="an" class="lp-in" type="text" placeholder="Your full name" autocomplete="name"><input id="ae" class="lp-in" type="email" placeholder="Email" autocomplete="email"><input id="ap" class="lp-in" type="password" placeholder="Password (8+ characters)" autocomplete="current-password"><input id="apm" class="lp-in" type="email" placeholder="Parent or guardian email" autocomplete="off" style="display:none"><p id="apn" class="mut" style="display:none;margin:4px 0 8px;font-size:13px">So a parent or guardian can follow your progress. We will tell you before we contact them, and they can ask us to remove it. You can change it later from the menu.</p>'
+    +'<p id="acl" class="mut" style="display:none;margin:6px 0 8px;font-size:13px"><label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="acc" style="width:auto;margin-top:3px"><span id="acx"></span></label></p>'
     +'<button id="a1" class="p" style="width:100%;margin-top:4px">Sign in</button><p class="lp-sw"><a id="a-sw" href="#">New here? Create an account</a></p><p class="lp-sw" style="margin-top:6px"><a id="a3" href="#">Forgot password?</a></p><p style="text-align:center;margin:8px 0 0"><a id="a4" href="#">Back to home</a></p></div></div></div>';
     document.body.appendChild(o);
     if($i("land")){o.style.background="rgba(8,24,17,.55)";o.querySelectorAll(".lp-stripe,.lp-h,.lp-hero,.lp-cards,.lp-f").forEach(e=>{e.style.display="none"})}
@@ -153,13 +156,14 @@ function showAuth(note,mode){
       if($i("a1").dataset.mode==="reset"){if(P().length<8)return msg("Use a password of at least 8 characters.");const r=await sb.auth.updateUser({password:P()});if(r.error)return msg(r.error.message);msg("Password saved. You are signed in.",true);setTimeout(closeBox,900);return}
       const up=$i("a1").dataset.mode==="up";
       if(up&&!N())return msg("Please enter your name.");
+      if(up&&!($i("acc")&&$i("acc").checked))return msg("Please tick the box to confirm you have read the Privacy Notice.");
       const PM=()=>{const e=$i("apm");return e?String(e.value||"").trim():""},needP=up&&AUL!=="UNI";
       if(needP){if(!PM())return msg("Please enter a parent or guardian email.");if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(PM()))return msg("That parent email does not look right.");if(PM().toLowerCase()===E().toLowerCase())return msg("Use your parent or guardian email, not your own.")}
       if(!E())return msg("Enter your email.");
       if(!P())return msg("Enter your password.");
       if(up){
         if(P().length<8)return msg("Use a password of at least 8 characters.");
-        const r=await sb.auth.signUp({email:E(),password:P(),options:{data:{full_name:N(),parent_email:needP?PM().toLowerCase():"",form:needP?AUP.form:"",weak_subject:needP?AUP.weak:"",fav_subject:needP?AUP.fav:""}}});
+        const r=await sb.auth.signUp({email:E(),password:P(),options:{data:{full_name:N(),privacy_accepted_at:new Date().toISOString(),privacy_version:PRIV_VERSION,parent_email:needP?PM().toLowerCase():"",form:needP?AUP.form:"",weak_subject:needP?AUP.weak:"",fav_subject:needP?AUP.fav:""}}});
         if(r.error)return msg(r.error.message);
         if(!r.data.session){setMode("in");msg("Almost there! Check your email to confirm your account, then sign in.",true)}
       }else{
@@ -312,7 +316,7 @@ const LP_HTML=`<div class="lp-wrap">
 <li><span class="lp-num">3</span><h3>Fix weak spots</h3><p>See your weakest topics and revise those first.</p></li></ol></section>
 <div class="lp-band"><h2>Start with one set of notes.</h2><p>It is free to create an account and try it.</p><div class="lp-cta"><button class="lp-btn" data-go="up">Create free account</button><button class="lp-btn alt" data-go="in">Sign in</button></div></div>
 <p class="lp-fine">Practice questions are written for StudyLoop and are not copies of real WAEC papers. The AI can make mistakes, so check important answers with your teacher or textbook.</p>
-<div class="lp-foot">StudyLoop. Study. Test. Repeat.</div></div>`;
+<div class="lp-foot">StudyLoop. Study. Test. Repeat. &middot; <a id="lp-priv" href="#">Privacy notice</a></div></div>`;
 const LPQ=[
 {q:"In which year did Ghana become independent?",o:["1960","1957","1963","1966"],a:1,e:"Ghana became independent on 6 March 1957 under Kwame Nkrumah, the first country in sub-Saharan Africa to do so."},
 {q:"Which lake was formed by the Akosombo Dam?",o:["Lake Bosomtwe","Lake Kariba","Lake Volta","Lake Chad"],a:2,e:"Lake Volta formed behind the Akosombo Dam in the 1960s. It is one of the largest man-made lakes in the world."},
@@ -346,8 +350,58 @@ function showLanding(){
   const o=document.createElement("div");o.id="land";o.innerHTML=LP_HTML;document.body.appendChild(o);
   bindGo(o);
   lpQuiz(o);
+  const pv=o.querySelector("#lp-priv");if(pv)pv.onclick=e=>{e.preventDefault();showPrivacy()};
 }
 function hideLanding(){const o=$i("land");if(o)o.remove()}
+/* ---------- Privacy notice, data export and account deletion ---------- */
+const PRIV_VERSION="2026-11";
+function privHTML(){
+  const mail=CFG.contactEmail?'<a href="mailto:'+CFG.contactEmail+'">'+CFG.contactEmail+'</a>':"the contact details given on this website";
+  const h=(t)=>'<h3 style="margin:16px 0 4px;font-size:16px">'+t+'</h3>';
+  return '<h2 style="margin:0 0 4px">Privacy notice</h2><p class="mut" style="margin:0 0 8px">Version '+PRIV_VERSION+'. Written in plain language.</p>'
+  +h("What we collect")+'<p>Your name and email, your level and form, the subjects you find hardest and enjoy most, a parent or guardian email (for JHS and SHS students), the notes and files you add, and your quiz results and study progress.</p>'
+  +h("Why")+'<p>To run your account, make quizzes and plans from your notes, show your progress, and make StudyLoop fit your level. We do not sell your information and we do not show adverts.</p>'
+  +h("The AI")+'<p>When you ask for a quiz, an explanation or a chat reply, the text (and any pictures) you send is passed to an AI service, currently Google Gemini, to write the answer. On the free tier, Google may use what is sent to improve its products. So please do not put private details, such as phone numbers, addresses or other people\'s information, in your notes.</p>'
+  +h("Where it is kept")+'<p>Your account and study data are stored with Supabase. The website runs on Vercel. They process data on our behalf.</p>'
+  +h("Parents and guardians")+'<p>If you are a JHS or SHS student we ask for a parent or guardian email so they can follow your progress. We have not started sending anything to parents. Before we do, we will tell you, and parents will be able to agree or ask us to stop. You can change or remove the email from the menu at any time.</p>'
+  +h("Young people")+'<p>If you are under 18, please use StudyLoop with the knowledge of a parent or guardian.</p>'
+  +h("Your choices")+'<p>You can download your data and delete your account and everything stored with it from this screen. Deleting is permanent. Questions or requests to correct or remove information: '+mail+'.</p>'
+  +h("How long we keep it")+'<p>Until you delete your account. Reports you send about a question are kept without your name so we can fix the question.</p>';
+}
+function showPrivacy(){
+  if($i("priv"))return;
+  const o=document.createElement("div");o.id="priv";
+  o.style.cssText="position:fixed;inset:0;z-index:130;background:rgba(8,24,17,.6);display:flex;justify-content:center;padding:16px;overflow:auto";
+  const u=window.SL_USER;
+  o.innerHTML='<div class="card" style="width:100%;max-width:560px;margin:auto"><div style="font:15px/1.55 Georgia,serif">'+privHTML()+'</div>'
+   +(u?'<h3 style="margin:16px 0 6px;font-size:16px">Your data</h3><div class="row"><button id="pv-dl">Download my data</button></div><p class="mut" style="margin:12px 0 4px">To delete your account, type DELETE and press the button.</p><div class="row" style="flex-wrap:nowrap"><input id="pv-del" placeholder="DELETE" autocomplete="off" style="flex:1;min-width:0"><button id="pv-go" style="color:#b3392f;border-color:#b3392f">Delete my account</button></div><p id="pv-m" class="mut" style="min-height:18px"></p>':'')
+   +'<div class="row" style="margin-top:10px"><button class="p" id="pv-x">Close</button></div></div>';
+  document.body.appendChild(o);
+  $i("pv-x").onclick=closePrivacy;
+  o.onclick=e=>{if(e.target===o)closePrivacy()};
+  if(u){
+    $i("pv-dl").onclick=()=>{try{const S0=typeof S!=="undefined"?S:{};dl.save({filename:"studyloop-my-data.json",data:JSON.stringify({account:{email:u.email,name:(u.user_metadata||{}).full_name||"",form:(u.user_metadata||{}).form||"",parent_email:(u.user_metadata||{}).parent_email||""},study:S0},null,2)})}catch(e){$i("pv-m").textContent="Could not prepare the download."}};
+    $i("pv-go").onclick=async()=>{
+      if(($i("pv-del").value||"").trim()!=="DELETE")return($i("pv-m").textContent="Type DELETE in capital letters to confirm.");
+      $i("pv-m").textContent="Deleting...";
+      try{await deleteAccount()}catch(e){$i("pv-m").textContent=(e&&e.message)||"Could not delete the account. Please try again."}
+    };
+  }
+}
+function closePrivacy(){const o=$i("priv");if(o)o.remove()}
+async function deleteAccount(){
+  SY.ready=false;clearTimeout(SY.timer);
+  const r=await sb.rpc("delete_my_account");
+  if(r.error){SY.ready=true;throw r.error}
+  try{await sb.auth.signOut()}catch(e){}
+  Object.keys(localStorage).filter(k=>k.indexOf("sl")===0).forEach(k=>localStorage.removeItem(k));
+  location.reload();
+}
+window.SL_PRIVACY=showPrivacy;
+window.SL_REPORT=async p=>{
+  const u=window.SL_USER;if(!sb||!u)throw new Error("Sign in to send a report.");
+  const r=await sb.from("question_reports").insert(Object.assign({user_id:u.id},p));if(r.error)throw r.error;
+};
 async function saveParent(u){
   const pm=(u.user_metadata&&u.user_metadata.parent_email)||"";
   if(!pm||ls("sl-pl:"+u.id)===pm)return;
@@ -498,11 +552,11 @@ function quizPick(s){
 function runView(){
   if(qz.done){
     const sc=qz.qs.filter((q,i)=>qz.ans[i]===q.answer).length,p=Math.round(sc/qz.qs.length*100);
-    return`<div class="card"><h2 style="margin-top:0">Score: ${sc}/${qz.qs.length} (${p}%)</h2><div class="bar"><i style="width:${p}%"></i></div></div>`+insightCard(topicStats(qz.qs,qz.ans))+qz.qs.map((q,i)=>{const ok=qz.ans[i]===q.answer;return`<div class="card"><b style="font-family:system-ui">${ok?"✓":"✗"} ${esc(q.q)}</b><div class="mut">${q.st?tfRev(q,qz.ans[i]):`Your answer: ${esc(q.options[qz.ans[i]]??"no answer")}${ok?"":" · Correct: "+esc(q.options[q.answer])}`}</div><div>${esc(q.explain)}</div></div>`}).join("")+`<button class="p" onclick="qz=null;render()">Done</button> ${sc<qz.qs.length?'<button onclick="retryMissed()">Retry missed</button> ':""}${qz.kind==="exam"?'<button onclick="dlExam()">Printable paper</button>':""}`}
+    return`<div class="card"><h2 style="margin-top:0">Score: ${sc}/${qz.qs.length} (${p}%)</h2><div class="bar"><i style="width:${p}%"></i></div></div>`+insightCard(topicStats(qz.qs,qz.ans))+qz.qs.map((q,i)=>{const ok=qz.ans[i]===q.answer;return`<div class="card"><b style="font-family:system-ui">${ok?"✓":"✗"} ${esc(q.q)}</b><div class="mut">${q.st?tfRev(q,qz.ans[i]):`Your answer: ${esc(q.options[qz.ans[i]]??"no answer")}${ok?"":" · Correct: "+esc(q.options[q.answer])}`}</div><div>${esc(q.explain)}</div><p style="margin:8px 0 0;font-size:13px"><a href="#" onclick="reportQ(${i});return false">Report a problem</a></p></div>`}).join("")+`<button class="p" onclick="qz=null;render()">Done</button> ${sc<qz.qs.length?'<button onclick="retryMissed()">Retry missed</button> ':""}${qz.kind==="exam"?'<button onclick="dlExam()">Printable paper</button>':""}`}
   const q=qz.qs[qz.i],a=qz.ans[qz.i];
   return`<div class="card"><div class="row" style="justify-content:space-between" ><span class="mut">Question ${qz.i+1} of ${qz.qs.length}</span>${qz.kind==="exam"?`<span class="row"><button onclick="dlExam()">Printable paper</button><b id="tm" style="font-family:system-ui">${fmt(qz.left)}</b></span>`:""}</div>
   <h3 style="margin-top:8px;font-size:18px">${esc(q.q)}</h3>${q.st?tfBlock(q):q.options.map((o,i)=>`<button class="opt ${a!=null?(i===q.answer?"ok":i===a?"no":""):""}" onclick="pick(${i})">${"ABCDE"[i]}. ${esc(o)}</button>`).join("")}
-  ${a!=null&&qz.kind==="quiz"?`<p>${esc(q.explain)}</p>`:""}${a!=null?`<button class="p" onclick="next()">${qz.i<qz.qs.length-1?"Next":"Finish"}</button>`:""}</div>`
+  ${a!=null&&qz.kind==="quiz"?`<p>${esc(q.explain)}</p>`:""}${a!=null?`<button class="p" onclick="next()">${qz.i<qz.qs.length-1?"Next":"Finish"}</button>`:""}<p style="margin:10px 0 0;font-size:13px"><a href="#" onclick="reportQ(${qz.i});return false">Report a problem with this question</a></p></div>`
 }
 let nq="";
 const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"),dk=()=>ymd(new Date());
@@ -602,7 +656,7 @@ $("#lgo").innerHTML=logo(34);
 function drawer(o){if(!o)window.pd=null;document.body.classList.toggle("mo",o);if(o)drRender()}
 function drRender(){if(S.level==="JHS"||S.level==="SHS")return drSchool();const L=s=>`<div class="dri${s.id===sid?" on":""}" onclick="drOpen('${s.id}')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span><button onclick="event.stopPropagation();pin('${s.id}')" aria-label="Mark important">${s.pin?"★":"☆"}</button><button onclick="event.stopPropagation();drDel('${s.id}')" aria-label="Delete course">${window.pd===s.id?"Sure?":"🗑"}</button></div>`;
 const P=S.sems.filter(s=>!s.hidden&&s.pin),O=S.sems.filter(s=>!s.hidden&&!s.pin);
-$("#dr").innerHTML=`<div class="row" style="justify-content:space-between"><span class="row" style="gap:8px;flex-wrap:nowrap">${logo(28)}<b style="font-size:19px">StudyLoop</b></span><button onclick="drawer(false)" aria-label="Close menu">✕</button></div><p class="mut" style="margin:14px 0 4px">New ${lvl().unit}</p><div class="row" style="margin:0 0 8px;flex-wrap:nowrap"><input id="dn" placeholder="New ${lvl().unit}…" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter')drNew()"><button class="p" onclick="drNew()" aria-label="Create">+</button></div>${drMain()}${P.length?`<p class="mut" style="margin:12px 0 4px">★ Important</p>${P.map(L).join("")}`:""}${O.length?`<p class="mut" style="margin:12px 0 4px">${P.length?"Other "+lvl().unit+"s":"Your "+lvl().unit+"s"}</p>${O.map(L).join("")}`:""}${S.sems.some(s=>!s.hidden)?"":'<p class="mut">Nothing yet. Create your first one above.</p>'}<p class="mut" style="margin:18px 0 0">${lvl().name} · <a href="#" onclick="changeLevel();return false">Change level</a></p>`}
+$("#dr").innerHTML=`<div class="row" style="justify-content:space-between"><span class="row" style="gap:8px;flex-wrap:nowrap">${logo(28)}<b style="font-size:19px">StudyLoop</b></span><button onclick="drawer(false)" aria-label="Close menu">✕</button></div><p class="mut" style="margin:14px 0 4px">New ${lvl().unit}</p><div class="row" style="margin:0 0 8px;flex-wrap:nowrap"><input id="dn" placeholder="New ${lvl().unit}…" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter')drNew()"><button class="p" onclick="drNew()" aria-label="Create">+</button></div>${drMain()}${P.length?`<p class="mut" style="margin:12px 0 4px">★ Important</p>${P.map(L).join("")}`:""}${O.length?`<p class="mut" style="margin:12px 0 4px">${P.length?"Other "+lvl().unit+"s":"Your "+lvl().unit+"s"}</p>${O.map(L).join("")}`:""}${S.sems.some(s=>!s.hidden)?"":'<p class="mut">Nothing yet. Create your first one above.</p>'}<p class="mut" style="margin:18px 0 0">${lvl().name} · <a href="#" onclick="changeLevel();return false">Change level</a></p>`+(window.SL_PRIVACY?`<p class="mut" style="margin:8px 0 0"><a href="#" onclick="window.SL_PRIVACY();return false">Privacy and your data</a></p>`:"")}
 function drTools(){const s=sid&&sem();if(!s)return'<p class="mut" style="margin:12px 0 4px">Open a course to see its tools.</p>';const T=(t,i,l)=>`<div class="dri${tab===t?" on":""}" onclick="drGo('${t}')">${i} ${l}</div>`;return`<p class="mut" style="margin:12px 0 4px">Tools · ${esc(s.name)}</p>`+T("quiz","📄","Question papers")+T("group","👥","Live group session")+T("prog","📊","Topic strengths")+T("chat","💬","AI tutor chat")+T("exam","📝","Mock exam")+T("focus","⏱️","Focus timer")}
 function drWeak(){const s=sid&&sem();if(!s)return"";const t={};s.results.forEach(r=>Object.entries(r.tp||{}).forEach(([k,v])=>{t[k]=t[k]||[0,0];t[k][0]+=v[0];t[k][1]+=v[1]}));const w=Object.entries(t).filter(([k,v])=>v[1]>=2).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1]).slice(0,3);if(!w.length)return"";return`<p class="mut" style="margin:12px 0 4px">Needs work</p>`+w.map(([k,v])=>{const p=Math.round(v[0]/v[1]*100);return`<div class="dri" onclick="drGo('prog')" style="display:block"><div class="row" style="justify-content:space-between"><span>${esc(k)}</span><span class="mut">${p}%</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join("")}
 function drMain(){const I=[["chat","Shark","A general tutor that draws on the notes from all your courses"],["quiz","Quiz","Upload a PDF of questions and answer them here. Separate from your courses"],["sci","Integrated Science","Syllabus topics, practice and mock papers"],["cmath","Core Mathematics","WASSCE syllabus topics, practice and mock papers"],["eng","English Language","WASSCE syllabus topics, practice and mock papers"],["ss","Social Studies","WASSCE syllabus topics, practice and mock papers"],["plan","Planner","Build a day-by-day revision plan up to your exam date"],["prog","Progress","See your scores, topic strengths and where you lose marks"],["focus","Focus","Run a focus timer with breaks and alerts"],["group","Group","Join a study group, compete on the leaderboard and host live sessions"]];return I.filter(x=>(x[0]!=="sci"||S.level==="SHS"||S.level==="JHS")&&(x[0]!=="cmath"||S.level==="SHS")&&(x[0]!=="eng"||S.level==="SHS")&&(x[0]!=="ss"||S.level==="SHS")).map(([t,l,d])=>`<div class="dri${(t==="quiz"?sid===PS:t==="chat"?sid===TS:t==="sci"?sid===SID:t==="cmath"?sid==="_cmath":t==="eng"?sid==="_eng":t==="ss"?sid==="_ss":sid&&sid!==PS&&sid!==TS&&!isSciSid(sid)&&tab===t)?" on":""}" title="${esc(d)}" onclick="${t==="quiz"?"drPapers()":t==="sci"?"drSci()":t==="cmath"?"drSci('CM')":t==="eng"?"drSci('EN')":t==="ss"?"drSci('SS')":t==="chat"?"drTutor()":`drGo('${t}')`}"><span>${l}</span></div>`).join("")}
@@ -718,8 +772,13 @@ $("#dr").innerHTML=`<div class="row" style="justify-content:space-between"><span
 +`<p class="mut" style="margin:14px 0 4px">Your own notes</p><div class="row" style="margin:0 0 8px;flex-wrap:nowrap"><input id="dn" placeholder="Add a subject or topic…" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter')drNew()"><button class="p" onclick="drNew()" aria-label="Create">+</button></div>`
 +own.map(s=>`<div class="dri${s.id===sid?" on":""}" onclick="drOpen('${s.id}')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span><button onclick="event.stopPropagation();drDel('${s.id}')" aria-label="Delete">${window.pd===s.id?"Sure?":"🗑"}</button></div>`).join("")
 +(window.SL_PARENT?`<p class="mut" style="margin:14px 0 0">Parent: ${esc(window.SL_PARENT.get()||"not added")} · <a href="#" onclick="parentEdit();return false">${window.SL_PARENT.get()?"Change":"Add"}</a></p>`:"")
-+`<p class="mut" style="margin:18px 0 0">${lvl().name} · <a href="#" onclick="changeLevel();return false">Change level</a></p>`}
++`<p class="mut" style="margin:18px 0 0">${lvl().name} · <a href="#" onclick="changeLevel();return false">Change level</a></p>`+(window.SL_PRIVACY?`<p class="mut" style="margin:8px 0 0"><a href="#" onclick="window.SL_PRIVACY();return false">Privacy and your data</a></p>`:"")}
 async function parentEdit(){if(!window.SL_PARENT)return;const e=prompt("Parent or guardian email (leave blank to remove)",window.SL_PARENT.get());if(e===null)return;const v=e.trim();if(v&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){err="That email does not look right.";return render()}try{await window.SL_PARENT.set(v);err=""}catch(x){err=x.message||"Could not save the parent email.";render()}drRender()}
+function reportQ(i){const q=qz&&qz.qs[i];if(!q||document.getElementById('rp'))return;const s=sem(),o=document.createElement('div');o.id='rp';o.style.cssText='position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px';
+o.innerHTML=`<div class="card" style="max-width:420px;width:100%;margin:0"><h3 style="margin-top:0">Report a problem</h3><p class="mut" style="margin:0 0 8px">${esc(q.q)}</p><select id="rpr"><option value="wrong_answer">The answer is wrong</option><option value="unclear">The question is unclear</option><option value="typo">Spelling or wording mistake</option><option value="off_syllabus">Not in my syllabus</option><option value="other">Something else</option></select><textarea id="rpn" maxlength="500" placeholder="Tell us more (optional)" style="min-height:70px;margin-top:8px"></textarea><div class="row" style="margin-top:10px"><button class="p" id="rps">Send report</button><button id="rpc">Cancel</button></div><p id="rpm" class="mut" style="min-height:18px;margin:8px 0 0"></p></div>`;
+document.body.appendChild(o);const shut=()=>o.remove();document.getElementById('rpc').onclick=shut;o.onclick=e=>{if(e.target===o)shut()};
+document.getElementById('rps').onclick=async()=>{const m=document.getElementById('rpm'),p={subject:((s&&s.name)||'').slice(0,80),topic:String(q.topic||'').slice(0,120),question:String(q.q).slice(0,1500),options:q.options||(q.st?q.st.map(x=>x.t):null),shown_answer:String(q.st?q.answer:(q.options?q.options[q.answer]:'')).slice(0,300),reason:document.getElementById('rpr').value,note:document.getElementById('rpn').value.trim().slice(0,500)};
+try{if(window.SL_REPORT)await window.SL_REPORT(p);else{S.reports=(S.reports||[]).concat(Object.assign({at:Date.now()},p)).slice(-50);save()}m.textContent='Thank you. We will check this question.';setTimeout(shut,1200)}catch(e){m.textContent=(e&&e.message)||'Could not send the report. Please try again.'}}}
 function drGo(t){if(!sid||sid===PS||sid===TS||sid===FS||isSciSid(sid)){const V=S.sems.filter(x=>!x.hidden),f=V.find(x=>x.pin)||V[V.length-1];if(!f){drawer(false);err="Create a "+lvl().unit+" first.";sid=null;render();return}openSem(f.id)}drawer(false);setTab(t)}
 function drGoOld(t){drawer(false);setTab(t)}
 function drDel(id){const was=window.pd===id;delSem(id);if(was&&sid===id)sid=null;drRender();render()}
